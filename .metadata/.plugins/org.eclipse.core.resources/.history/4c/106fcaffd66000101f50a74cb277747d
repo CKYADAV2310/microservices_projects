@@ -1,0 +1,33 @@
+package com.employee.mgmt.service;
+
+import java.util.List;
+
+import com.employee.mgmt.entity.Employee;
+
+public class EmployeeServiceImpl implements EmployeeService {
+
+	@Override
+	public List<Employee> getAll() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void save(Employee emp) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void delete(int id) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public Employee getById(int id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

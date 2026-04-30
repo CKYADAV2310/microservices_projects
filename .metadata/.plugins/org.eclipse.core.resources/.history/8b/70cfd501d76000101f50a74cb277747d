@@ -1,0 +1,5 @@
+package com.employee.mgmt.service;
+
+public interface EmployeeService {
+
+}
