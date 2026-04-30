@@ -39,8 +39,8 @@ eureka:
 springdoc:
   api-docs:
     enabled: true
+    path: /product/v3/api-docs 
   swagger-ui:
     path: /swagger-ui.html
   server:
-    url: /
- 
+    url: /product

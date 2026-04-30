@@ -14,6 +14,9 @@ spring:
           uri: lb://AUTH-SERVICE
           predicates:
             - Path=/auth/**
+          filters:
+            # This removes the first "/auth" so Auth-Service sees "/register"
+            - StripPrefix=0
 
         # Product Service: Protected by AuthenticationFilter
         - id: product-service

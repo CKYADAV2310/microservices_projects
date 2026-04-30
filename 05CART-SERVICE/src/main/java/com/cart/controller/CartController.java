@@ -2,7 +2,10 @@ package com.cart.controller;
 
 import com.cart.entity.CartItem;
 import com.cart.service.CartService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -13,28 +16,32 @@ public class CartController {
     @Autowired
     private CartService service;
 
-    /**
-     * Adds an item to the cart. 
-     * The 'username' is pulled from the Gateway Header for security.
-     */
+    @Operation(summary = "Add item to cart")
     @PostMapping("/add")
-    public CartItem add(
-            @RequestBody CartItem item, 
+    public ResponseEntity<CartItem> addToCart(
+            @RequestBody CartItem item,
             @RequestHeader("loggedInUser") String username) {
-        
-        // We pass the authenticated username to the service layer
-        return service.addToCart(item, username);
+        return ResponseEntity.ok(service.addToCart(item, username));
+    }
+
+    @Operation(summary = "Get user's cart")
+    @GetMapping("/my-cart")
+    public ResponseEntity<List<CartItem>> getMyCart(@RequestHeader("loggedInUser") String username) {
+        return ResponseEntity.ok(service.getCartByUser(username));
     }
 
     /**
-     * Fetches the cart for the currently logged-in user.
-     * Path variable removed to prevent unauthorized data access.
+     * Admin only access to clear a specific user's cart.
      */
-    @GetMapping("/my-cart")
-    public List<CartItem> getCart(
-        @RequestHeader(value = "loggedInUser", required = false) String username) {
+    @Operation(summary = "Admin: Clear user cart")
+    @DeleteMapping("/admin/clear/{targetUser}")
+    //@PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> clearUserCart(
+            @PathVariable String targetUser,
+            @RequestHeader("role") String role) {
         
-        System.out.println("Username received in Cart-Service: " + username);
-        return service.getCartByUser(username);
+        System.out.println("Admin action initiated by role: " + role);
+        service.clearCart(targetUser);
+        return ResponseEntity.ok("Cart cleared for user: " + targetUser);
     }
 }

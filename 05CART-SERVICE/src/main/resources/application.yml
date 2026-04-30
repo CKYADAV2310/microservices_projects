@@ -40,10 +40,14 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
 
 # API Documentation
+# API Documentation
 springdoc:
   api-docs:
     enabled: true
+    # This aligns with the path the Gateway is looking for
+    path: /cart/v3/api-docs 
   swagger-ui:
     path: /swagger-ui.html
+  # This ensures relative paths inside Swagger are correct
   server:
-    url: /
+    url: /cart

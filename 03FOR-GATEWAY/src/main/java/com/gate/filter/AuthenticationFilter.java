@@ -8,10 +8,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
-/**
- * Global Gateway Filter for Authentication and Authorization (RBAC).
- * Intercepts incoming requests, validates tokens, and checks user roles.
- */
 @Component
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
 
@@ -25,57 +21,56 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         super(Config.class);
     }
 
-    /**
-     * Core filter logic that executes for every request routed through the gateway.
-     */
     @Override
     public GatewayFilter apply(Config config) {
         return ((exchange, chain) -> {
-            
-            // Step 1: Check if the route is secured (not in public list)
             if (validator.isSecured.test(exchange.getRequest())) {
-                
-                // Step 2: Validate the presence of the Authorization header
+                // 1. Check if Header exists
                 if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                     throw new RuntimeException("Missing Authorization Header");
                 }
 
-                String authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
-                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                    authHeader = authHeader.substring(7);
+                String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+                
+                // 2. Validate prefix format
+                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                    throw new RuntimeException("Invalid Authorization Header Format");
                 }
 
                 try {
-                    // Step 3: Validate Token Signature
-                    jwtUtil.validateToken(authHeader);
+                    // 3. STRIP PREFIX: Remove "Bearer " (7 characters) before passing to JwtUtil
+                    String token = authHeader.substring(7);
 
-                    // Step 4: Extract Role and Path for Authorization check
-                    String role = jwtUtil.extractRole(authHeader);
-                    String username = jwtUtil.extractUsername(authHeader);
+                    // 4. Validate the actual token string
+                    jwtUtil.validateToken(token);
+
+                    String role = jwtUtil.extractRole(token); 
+                    String username = jwtUtil.extractUsername(token);
                     String path = exchange.getRequest().getURI().getPath();
 
-                    /**
-                     * ROLE-BASED AUTHORIZATION:
-                     * If the path is an admin path and user is not ADMIN, return 403 Forbidden.
-                     */
-                    if (path.contains("/admin") && !"ADMIN".equals(role)) {
+                    // Debug Logs - Check these in your STS console
+                    System.out.println("Gateway: Validating Token for User: " + username);
+                    System.out.println("Gateway: Path: " + path + " | Role: " + role);
+
+                    // 5. Gateway-level Admin Check
+                    if (path.contains("/admin") && !role.toUpperCase().contains("ADMIN")) {
                         exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
                         return exchange.getResponse().setComplete();
                     }
 
-                    /**
-                     * HEADER PROPAGATION:
-                     * Inject the username and role into headers for downstream microservices.
-                     */
+                    // 6. Propagate prefixed role (Spring Security requires ROLE_ prefix)
+                    String downstreamRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+
                     return chain.filter(exchange.mutate()
                             .request(exchange.getRequest().mutate()
                                     .header("loggedInUser", username)
-                                    .header("role", role)
+                                    .header("role", downstreamRole) 
                                     .build())
                             .build());
-
+                            
                 } catch (Exception e) {
-                    // If token is invalid or expired
+                    // Log the actual error to see why it's failing (Expired? Signature mismatch?)
+                    System.out.println("Gateway Auth Error: " + e.getMessage());
                     exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                     return exchange.getResponse().setComplete();
                 }
@@ -84,7 +79,5 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         });
     }
 
-    public static class Config {
-        // Configuration properties can be added here if needed
-    }
+    public static class Config {}
 }

@@ -5,18 +5,17 @@ import com.product.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j; // Use SLF4J for logging
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
-/**
- * Controller for Product management.
- * Administrative paths (/admin/**) are secured at the Gateway level.
- */
 @RestController
 @RequestMapping("/product")
 @Tag(name = "Product API", description = "Endpoints for managing products")
+@Slf4j // Industry standard logging
 public class ProductController {
 
     @Autowired
@@ -24,7 +23,6 @@ public class ProductController {
 
     /**
      * Admin endpoint to add a new product.
-     * Path is set to /admin to trigger Gateway's Role-Based Access Control.
      */
     @Operation(summary = "Add a new product", description = "Admin only access for adding items")
     @PostMapping("/admin/add")
@@ -32,10 +30,10 @@ public class ProductController {
             @RequestBody Product product,
             @RequestHeader(value = "loggedInUser", required = false) String adminEmail) {
         
-        // Logs the admin action for auditing purposes
-        System.out.println("Product addition initiated by: " + adminEmail);
+        log.info("Product addition initiated by: {}", adminEmail);
         Product savedProduct = service.saveProduct(product);
-        return ResponseEntity.ok(savedProduct);
+        // Using 201 Created is standard for POST operations
+        return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
     }
 
     /**
@@ -44,21 +42,26 @@ public class ProductController {
     @Operation(summary = "Get all products", description = "Fetches a list of all available products")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved list")
     @GetMapping("/all")
-    public List<Product> findAllProducts() {
-        return service.getProducts();
+    public ResponseEntity<List<Product>> findAllProducts() {
+        return ResponseEntity.ok(service.getProducts());
     }
 
     /**
-     * Fetch a single product by ID.
+     * Fetch single product. 
+     * This is the endpoint called by Cart-Service via Feign.
      */
     @GetMapping("/{id}")
-    public Product findProductById(@PathVariable Long id) {
-        return service.getProductById(id);
+    public ResponseEntity<Product> findProductById(@PathVariable Long id) {
+        Product product = service.getProductById(id);
+        if (product == null) {
+            // This triggers the 404 logic in the Feign Client
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.ok(product);
     }
 
     /**
      * Admin endpoint to delete a product.
-     * Path is set to /admin to ensure only users with the 'ADMIN' role can execute this.
      */
     @Operation(summary = "Delete a product", description = "Admin only access for removing items")
     @DeleteMapping("/admin/delete/{id}")
@@ -66,7 +69,7 @@ public class ProductController {
             @PathVariable Long id,
             @RequestHeader(value = "loggedInUser", required = false) String adminEmail) {
         
-        System.out.println("Product deletion for ID " + id + " requested by: " + adminEmail);
+        log.info("Product deletion for ID {} requested by: {}", id, adminEmail);
         String response = service.deleteProduct(id);
         return ResponseEntity.ok(response);
     }

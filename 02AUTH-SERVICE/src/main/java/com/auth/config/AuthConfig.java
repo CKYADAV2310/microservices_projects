@@ -54,13 +54,15 @@ public class AuthConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
-        		.authorizeHttpRequests(auth -> auth
-        			    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-        			    .requestMatchers("/auth/register", "/auth/token", "/auth/validate", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
-        			    .anyRequest().authenticated()
-        			)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .build();
+            .authorizeHttpRequests(auth -> auth
+                // Permit the Swagger paths with the /auth prefix
+                .requestMatchers("/auth/v3/api-docs/**", "/auth/swagger-ui/**", "/auth/swagger-ui.html").permitAll()
+                // Permit your functional endpoints
+                .requestMatchers("/auth/register", "/auth/token", "/auth/validate").permitAll()
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .build();
     }
 
     /**

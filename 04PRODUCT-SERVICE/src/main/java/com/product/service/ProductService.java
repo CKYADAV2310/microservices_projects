@@ -2,20 +2,18 @@ package com.product.service;
 
 import com.product.entity.Product;
 import com.product.repo.ProductRepository;
+import lombok.extern.slf4j.Slf4j; // Norm: Use logging
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // Norm: Ensure Atomicity
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Service Layer for Product Management.
- * Implements the "Cache-Aside" pattern using Redis and 
- * "Event-Driven" communication using Apache Kafka.
- */
 @Service
+@Slf4j
 public class ProductService {
 
     @Autowired
@@ -24,53 +22,42 @@ public class ProductService {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
+    // Changed to Long to match the Consumer's expected value-deserializer
     @Autowired
-    private KafkaTemplate<String, String> kafkaTemplate;
+    private KafkaTemplate<String, Long> kafkaTemplate;
 
-    // Standard prefix for Redis keys to avoid collisions with other services
     private static final String CACHE_KEY_PREFIX = "PRODUCT_";
 
-    /**
-     * Saves a product to MySQL and updates the Redis cache.
-     * Putting data in cache during save prevents a "Cache Miss" on the first read.
-     */
+    @Transactional
     public Product saveProduct(Product product) {
         Product savedProduct = repository.save(product);
-        
-        // Update Cache: Key = PRODUCT_ID, Value = Product Object
-        // Expiry set to 10 minutes to keep memory clean
-        redisTemplate.opsForValue().set(CACHE_KEY_PREFIX + savedProduct.getId(), 
-                                        savedProduct, 10, TimeUnit.MINUTES);
+        try {
+            redisTemplate.opsForValue().set(CACHE_KEY_PREFIX + savedProduct.getId(), 
+                                            savedProduct, 10, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.error("Redis Cache update failed: {}", e.getMessage());
+        }
         return savedProduct;
     }
 
-    /**
-     * Fetches all products directly from the database.
-     * Caching full lists is usually avoided unless the list is small and static.
-     */
     public List<Product> getProducts() {
         return repository.findAll();
     }
 
-    /**
-     * Implements the Cache-Aside Pattern:
-     * 1. Check Redis for the data.
-     * 2. If present (Cache Hit), return it immediately.
-     * 3. If absent (Cache Miss), fetch from MySQL, save to Redis, and return.
-     */
     public Product getProductById(Long id) {
         String key = CACHE_KEY_PREFIX + id;
-
-        // Step 1: Query Redis (RAM-based, O(1) complexity)
-        Product cachedProduct = (Product) redisTemplate.opsForValue().get(key);
-        if (cachedProduct != null) {
-            return cachedProduct; 
+        try {
+            Product cachedProduct = (Product) redisTemplate.opsForValue().get(key);
+            if (cachedProduct != null) {
+                log.info("Cache Hit for Product ID: {}", id);
+                return cachedProduct; 
+            }
+        } catch (Exception e) {
+            log.error("Redis unreachable, falling back to DB: {}", e.getMessage());
         }
 
-        // Step 2: Query MySQL (Disk-based, slower)
         Product product = repository.findById(id).orElse(null);
 
-        // Step 3: Populate Cache for the next request
         if (product != null) {
             redisTemplate.opsForValue().set(key, product, 10, TimeUnit.MINUTES);
         }
@@ -78,20 +65,24 @@ public class ProductService {
     }
 
     /**
-     * Deletes product from DB and cleans up external systems.
-     * 1. Remove from MySQL.
-     * 2. Evict (delete) from Redis to prevent stale data.
-     * 3. Notify Cart-Service via Kafka to remove item from users' carts.
+     * TRANSACTIONAL: If Kafka or Redis fail, the DB delete can roll back 
+     * or be handled as a single unit of work.
      */
+    @Transactional
     public String deleteProduct(Long id) {
+        if (!repository.existsById(id)) {
+            return "Product not found with ID: " + id;
+        }
+
         repository.deleteById(id);
 
-        // Cache Eviction: Ensures no one reads a product that no longer exists
+        // Evict Cache
         redisTemplate.delete(CACHE_KEY_PREFIX + id);
 
-        // Kafka Event: Asynchronous notification to other microservices
-        kafkaTemplate.send("product-events", "DELETED:" + id);
-
+        // MATCHING THE CONSUMER: Send the raw Long ID to "product-deletion-topic"
+        kafkaTemplate.send("product-deletion-topic", id);
+        
+        log.info("Product {} deleted and sync event broadcasted", id);
         return "Product removed !! " + id;
     }
 }
