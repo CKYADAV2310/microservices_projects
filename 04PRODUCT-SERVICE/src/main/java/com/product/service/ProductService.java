@@ -1,13 +1,15 @@
 package com.product.service;
 
 import com.product.entity.Product;
+import com.product.exception.ProductNotFoundException;
 import com.product.repo.ProductRepository;
-import lombok.extern.slf4j.Slf4j; // Norm: Use logging
+import lombok.extern.slf4j.Slf4j; 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // Norm: Ensure Atomicity
+import org.springframework.transaction.annotation.Transactional; 
+// We use @Transactional to ensure that if any part of the delete operation fails (DB, Redis, Kafka), we can roll back the entire transaction to maintain data integrity.
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -69,20 +71,27 @@ public class ProductService {
      * or be handled as a single unit of work.
      */
     @Transactional
-    public String deleteProduct(Long id) {
-        if (!repository.existsById(id)) {
-            return "Product not found with ID: " + id;
-        }
+    public void deleteProduct(Long id) {
+        Product product = repository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found with ID: " + id));
 
-        repository.deleteById(id);
+        repository.delete(product);
 
         // Evict Cache
+        //
         redisTemplate.delete(CACHE_KEY_PREFIX + id);
 
-        // MATCHING THE CONSUMER: Send the raw Long ID to "product-deletion-topic"
-        kafkaTemplate.send("product-deletion-topic", id);
-        
-        log.info("Product {} deleted and sync event broadcasted", id);
-        return "Product removed !! " + id;
+        // Asynchronous Kafka Send
+        // We send the ID of the deleted product to Kafka. The Cart-Service will listen to this topic and remove any cart items that reference this product.
+        kafkaTemplate.send("product-deletion-topic", id).whenComplete((result, ex) -> {
+            if (ex == null) {
+                log.info("Message sent to Kafka successfully for ID: {}", id);
+                // We can also log the partition and offset if needed
+            } else {
+                log.error("Failed to send Kafka message: {}", ex.getMessage());
+                // Depending on requirements, we can  implement a retry mechanism here
+            }
+        });
     }
+    
 }

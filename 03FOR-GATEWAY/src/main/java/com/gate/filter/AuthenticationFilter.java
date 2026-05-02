@@ -48,17 +48,17 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                     String username = jwtUtil.extractUsername(token);
                     String path = exchange.getRequest().getURI().getPath();
 
-                    // Debug Logs - Check these in your STS console
+                    //  Debugging logs to verify token extraction and role validation
                     System.out.println("Gateway: Validating Token for User: " + username);
                     System.out.println("Gateway: Path: " + path + " | Role: " + role);
 
-                    // 5. Gateway-level Admin Check
+                    //   5. Enforce role-based access control for admin endpoints
                     if (path.contains("/admin") && !role.toUpperCase().contains("ADMIN")) {
                         exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
                         return exchange.getResponse().setComplete();
                     }
 
-                    // 6. Propagate prefixed role (Spring Security requires ROLE_ prefix)
+                    // 6. Propagate prefixed role (Spring Security requires ROLE_ prefix) to downstream services
                     String downstreamRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
 
                     return chain.filter(exchange.mutate()

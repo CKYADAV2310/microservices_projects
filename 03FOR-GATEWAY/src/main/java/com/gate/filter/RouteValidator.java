@@ -8,15 +8,17 @@ import java.util.function.Predicate;
 @Component
 public class RouteValidator {
 
-	// Inside RouteValidator.java
+	// List of endpoints that do not require authentication
 	public static final List<String> openApiEndpoints = List.of(
-	        "/auth/register",
-	        "/auth/token",
-	        "/auth/v3/api-docs",    // Added this
-	        "/product/v3/api-docs", // Added this
-	        "/v3/api-docs",
-	        "/swagger-ui",
-	        "/webjars"
+	        "/auth/register", 
+	        "/auth/login", 
+	        "/auth/v3/api-docs",   
+	        "/product/v3/api-docs", 
+	        "/v3/api-docs", 
+	        "/swagger-ui", 
+	        "/webjars", 
+	        "/auth/forgot-password" 	,  
+            "/auth/reset-password"   
 	);
 
     public Predicate<ServerHttpRequest> isSecured =

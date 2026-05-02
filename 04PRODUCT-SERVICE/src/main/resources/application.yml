@@ -27,7 +27,7 @@ spring:
     producer:
       # Key and Value must be serialized to bytes for Kafka
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.LongSerializer
 
 # Service Discovery
 eureka:

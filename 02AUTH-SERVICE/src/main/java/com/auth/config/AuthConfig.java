@@ -50,15 +50,18 @@ public class AuthConfig {
     /**
      * Configures the main security filter chain.
      * Public endpoints like registration and login are permitted for everyone.
+     * 
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                // Permit the Swagger paths with the /auth prefix
-                .requestMatchers("/auth/v3/api-docs/**", "/auth/swagger-ui/**", "/auth/swagger-ui.html").permitAll()
-                // Permit your functional endpoints
-                .requestMatchers("/auth/register", "/auth/token", "/auth/validate").permitAll()
+                // Permit Swagger and Documentation
+                .requestMatchers("/auth/v3/api-docs/**",  "/auth/swagger-ui/**", "/auth/swagger-ui.html").permitAll()               
+                // Permit Password Reset Endpoints
+                .requestMatchers("/auth/forgot-password", "/auth/reset-password").permitAll()               
+                // Permit Registration and Token Generation
+                .requestMatchers("/auth/register", "/auth/login", "/auth/validate").permitAll()                
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

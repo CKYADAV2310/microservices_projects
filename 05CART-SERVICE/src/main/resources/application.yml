@@ -31,7 +31,7 @@ spring:
       group-id: cart-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.LongDeserializer
 
 # Service Discovery
 eureka:
@@ -40,7 +40,7 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
 
 # API Documentation
-# API Documentation
+
 springdoc:
   api-docs:
     enabled: true

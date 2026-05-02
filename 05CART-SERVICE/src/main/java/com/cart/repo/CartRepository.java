@@ -1,32 +1,30 @@
 package com.cart.repo;
 
-import java.util.List;
-import java.util.Optional;
+import com.cart.entity.CartItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
-import com.cart.entity.CartItem;
+import java.util.List;
+import java.util.Optional;
 
-/**
- * Repository for managing Cart persistence.
- * Includes custom queries for user-specific carts and global cleanup.
- */
 public interface CartRepository extends JpaRepository<CartItem, Long> {
-    
-    // Fetch all items for a specific user
-    List<CartItem> findByUsername(String username);
 
-    // Check if a product already exists in a user's cart (to increment quantity instead of adding new row)
+    List<CartItem> findByUsername(String username);
     Optional<CartItem> findByUsernameAndProductId(String username, Long productId);
 
     /**
-     * CRITICAL: Triggered by Kafka Consumer.
-     * Removes a specific product from EVERY user's cart if that product is deleted 
-     * from the Product-Service.
+     * FIX: For custom delete methods, you MUST add @Modifying and @Transactional
      */
     @Modifying
     @Transactional
-    @Query("DELETE FROM CartItem c WHERE c.productId = :productId")
+    @Query("DELETE FROM CartItem c WHERE c.username = :username")
+    void deleteByUsername(String username);
+
+    /**
+     * This will be used by your Kafka Consumer to clean up deleted products
+     */
+    @Modifying
+    @Transactional
     void deleteByProductId(Long productId);
 }

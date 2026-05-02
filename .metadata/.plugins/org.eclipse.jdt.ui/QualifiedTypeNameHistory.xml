@@ -24,8 +24,13 @@
     <fullyQualifiedTypeName name="javax.naming.AuthenticationException"/>
     <fullyQualifiedTypeName name="org.springframework.security.core.Authentication"/>
     <fullyQualifiedTypeName name="jakarta.persistence.Id"/>
-    <fullyQualifiedTypeName name="org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource"/>
     <fullyQualifiedTypeName name="io.jsonwebtoken.lang.Collections"/>
     <fullyQualifiedTypeName name="io.jsonwebtoken.lang.Arrays"/>
     <fullyQualifiedTypeName name="java.util.List"/>
+    <fullyQualifiedTypeName name="org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource"/>
+    <fullyQualifiedTypeName name="java.util.Arrays"/>
+    <fullyQualifiedTypeName name="org.springframework.web.cors.CorsConfigurationSource"/>
+    <fullyQualifiedTypeName name="feign.Request.HttpMethod"/>
+    <fullyQualifiedTypeName name="org.springframework.security.access.AccessDeniedException"/>
+    <fullyQualifiedTypeName name="com.cart.dto.ApiResponse"/>
 </qualifiedTypeNameHistroy>

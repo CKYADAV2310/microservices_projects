@@ -1,13 +1,24 @@
 package com.cart.controller;
 
-import com.cart.entity.CartItem;
-import com.cart.service.CartService;
-import io.swagger.v3.oas.annotations.Operation;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.cart.dto.ApiResponse;
+import com.cart.entity.CartItem;
+import com.cart.service.CartService;
+
+import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 @RequestMapping("/cart")
@@ -33,15 +44,28 @@ public class CartController {
     /**
      * Admin only access to clear a specific user's cart.
      */
-    @Operation(summary = "Admin: Clear user cart")
+    
     @DeleteMapping("/admin/clear/{targetUser}")
-    //@PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> clearUserCart(
+    public ResponseEntity<ApiResponse<String>> clearUserCart(
             @PathVariable String targetUser,
             @RequestHeader("role") String role) {
         
-        System.out.println("Admin action initiated by role: " + role);
+        // Check if the user has admin role
+        if (role == null || !role.equalsIgnoreCase("ROLE_ADMIN")) {
+            throw new AccessDeniedException("Access Denied: Admin privileges required.");
+        }
+        
         service.clearCart(targetUser);
-        return ResponseEntity.ok("Cart cleared for user: " + targetUser);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Cart cleared successfully for: " + targetUser, null));
+    }
+    
+    @Operation(summary = "Remove single item from cart")
+    @DeleteMapping("/remove/{itemId}")
+    public ResponseEntity<ApiResponse<Void>> removeFromCart(
+            @PathVariable Long itemId,
+            @RequestHeader("loggedInUser") String username) {
+        
+        service.removeFromCart(itemId, username);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Item removed from cart", null));
     }
 }
