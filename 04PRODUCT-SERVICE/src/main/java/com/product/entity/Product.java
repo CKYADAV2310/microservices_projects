@@ -9,7 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Entity
+@Entity(name = "products")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -20,13 +20,16 @@ public class Product {
     private Long id;
     
     private String name;
-    
+ 
     private String description;
     
     private double price;
     
     private int quantity;
     
-    @Column(length = 500)  // To Ensures long URLs don't get truncated
+    @Column(name = "category")
+    private String category; 
+    
+    @Column(length = 500)  // Assuming the image URL can be long, we set a length for the column
     private String imageUrl; 
 }

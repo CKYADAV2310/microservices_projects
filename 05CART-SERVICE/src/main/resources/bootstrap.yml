@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: CART-SERVICE
+  cloud:
+    config:
+      uri: http://localhost:8888
+      fail-fast: true # If the Config Server is down, the service won't start

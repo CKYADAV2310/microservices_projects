@@ -1,6 +1,7 @@
 package com.gate.config;
 
 import java.util.Arrays;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -33,12 +34,14 @@ public class GatewaySecurityConfig {
                     "/auth/v3/api-docs/**",
                     "/product/v3/api-docs/**",
                     "/cart/v3/api-docs/**",
-                    "/auth/**"
+                    "/auth/**",
+                    "/actuator/**"
                 ).permitAll()
                 .anyExchange().permitAll() 
             )
             .build();
     }
+ 
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

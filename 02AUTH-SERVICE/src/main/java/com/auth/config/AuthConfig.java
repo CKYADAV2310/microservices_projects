@@ -61,7 +61,8 @@ public class AuthConfig {
                 // Permit Password Reset Endpoints
                 .requestMatchers("/auth/forgot-password", "/auth/reset-password").permitAll()               
                 // Permit Registration and Token Generation
-                .requestMatchers("/auth/register", "/auth/login", "/auth/validate").permitAll()                
+                .requestMatchers("/auth/register", "/auth/login", "/auth/validate").permitAll()      
+                .requestMatchers("/actuator/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

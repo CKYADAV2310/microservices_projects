@@ -1,0 +1,16 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: CONFIG-SERVER
+  cloud:
+    config:
+      server:
+        git:
+          
+          uri: https://github.com/CKYADAV2310/microservices-config-repo.git
+          username: CKYADAV2310
+          password: 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
+          default-label: main
+          force-pull: true
