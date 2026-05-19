@@ -11,6 +11,6 @@ spring:
           
           uri: https://github.com/CKYADAV2310/microservices-config-repo.git
           username: CKYADAV2310
-          password: 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
+          password: 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
           default-label: main
           force-pull: true

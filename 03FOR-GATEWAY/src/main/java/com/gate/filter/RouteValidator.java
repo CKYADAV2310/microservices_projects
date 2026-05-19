@@ -13,6 +13,7 @@ public class RouteValidator {
 	        "/auth/register", 
 	        "/auth/login", 
 	        "/auth/v3/api-docs",   
+	        "/products", // Allows guests to browse the catalog without a token!
 	        "/product/v3/api-docs", 
 	        "/v3/api-docs", 
 	        "/swagger-ui", 

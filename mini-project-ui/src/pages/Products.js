@@ -1,161 +1,113 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchAllProducts } from '../services/api'; // Using unified api import
+import { fetchAllProducts, addToCart } from '../services/api';
 
 const Products = () => {
     const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [errorMsg, setErrorMsg] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchAllProducts()
-            .then(res => setProducts(res.data))
-            .catch(err => console.error("Could not load products", err));
+            .then(res => {
+                // UNPACKING THE SHELL: If your Product-Service returns an ApiResponse wrapper, 
+                // extract res.data.data. If it returns a direct array, use res.data.
+                const productList = res.data && res.data.data ? res.data.data : res.data;
+                
+                if (Array.isArray(productList)) {
+                    setProducts(productList);
+                } else {
+                    console.error("Expected an array but received:", productList);
+                }
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Error fetching products:", err);
+                setErrorMsg("Failed to load catalog inventory. Please try again later.");
+                setLoading(false);
+            });
     }, []);
 
+    const handleAddToCart = async (product) => {
+        try {
+            // Payloads are mapped to match your CartItem entity structure perfectly
+            const payload = { 
+                productId: product.id, 
+                quantity: 1 
+            };
+            
+            await addToCart(payload);
+            alert(`🎉 ${product.name} successfully added to your cart!`);
+        } catch (err) {
+            console.error("Add to cart failed:", err);
+            alert("Your session may have expired or the Cart Service is temporarily unreachable. Redirecting to login...");
+            localStorage.clear();
+            navigate('/');
+        }
+    };
+
     const handleLogout = () => {
-        localStorage.removeItem('token');
+        localStorage.clear();
         navigate('/');
     };
 
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', fontSize: '20px' }}>
+                🚀 Loading Storefront Inventory...
+            </div>
+        );
+    }
+
     return (
-        <div>
-            {/* Elegant Header */}
+        <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
             <header style={headerStyle}>
-                <div style={brandStyle}>🎬 Movie Store (Gateway)</div>
-                <div style={navGroupStyle}>
-                    <span style={userGreetingStyle}>Welcome, CKYADAV</span>
-                    <button onClick={handleLogout} style={logoutButtonStyle}>Logout</button>
+                <div style={{ fontSize: '24px', fontWeight: '700', cursor: 'pointer' }} onClick={() => navigate('/customer-home')}>
+                    🎬 Movie Store
+                </div>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    <button onClick={() => navigate('/cart')} style={cartBtn}>🛒 View Cart</button>
+                    <button onClick={handleLogout} style={logoutBtn}>Logout</button>
                 </div>
             </header>
 
-            {/* Main Content Area (automatically uses global grey background) */}
-            <main style={mainContentStyle}>
-                <div style={gridStyle}>
-                    {products.map(p => (
-                        <div key={p.id} style={productCardStyle}>
-                            <div style={imageContainerStyle}>
-                                <img src={p.imageUrl} alt={p.name} style={imageStyle} />
+            <main style={{ padding: '40px' }}>
+                {errorMsg ? (
+                    <div style={{ color: '#d93025', textAlign: 'center', fontSize: '18px', marginTop: '20px' }}>{errorMsg}</div>
+                ) : products.length === 0 ? (
+                    <div style={{ textAlign: 'center', fontSize: '18px', marginTop: '20px', color: '#5f6368' }}>No movies available in the catalog right now.</div>
+                ) : (
+                    <div style={gridStyle}>
+                        {products.map(p => (
+                            <div key={p.id} style={productCard}>
+                                <img 
+                                    src={p.imageUrl || 'https://via.placeholder.com/250x350?text=No+Poster+Available'} 
+                                    alt={p.name} 
+                                    style={imgStyle} 
+                                />
+                                <div style={{ padding: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '600', color: '#202124' }}>{p.name}</h3>
+                                    <p style={{ margin: '0', fontSize: '14px', color: '#5f6368', minHeight: '40px' }}>{p.description}</p>
+                                    <p style={{ margin: '0', color: '#1a73e8', fontWeight: 'bold', fontSize: '20px' }}>₹{p.price.toFixed(2)}</p>
+                                    <button onClick={() => handleAddToCart(p)} style={addBtn}>Add to Cart</button>
+                                </div>
                             </div>
-                            <div style={cardDetailsStyle}>
-                                <h3 style={productNameStyle}>{p.name}</h3>
-                                <p style={productPriceStyle}>${p.price.toFixed(2)}</p>
-                                <button style={viewButtonStyle}>View Details</button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </main>
         </div>
     );
 };
 
-/* --- REDESIGNED PRODUCTS STYLES --- */
-
-const headerStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '16px 40px',
-    backgroundColor: 'white',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
-    position: 'sticky',
-    top: 0,
-    zIndex: 100
-};
-
-const brandStyle = {
-    fontSize: '24px',
-    fontWeight: '700',
-    color: '#1a1a1a'
-};
-
-const navGroupStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '20px'
-};
-
-const userGreetingStyle = {
-    fontSize: '14px',
-    color: '#666',
-    fontWeight: '500'
-};
-
-const logoutButtonStyle = {
-    padding: '8px 16px',
-    fontSize: '14px',
-    color: '#d93025', // Soft red
-    backgroundColor: 'white',
-    border: '1px solid #f5c6cb',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s'
-};
-
-const mainContentStyle = {
-    padding: '40px',
-};
-
-const gridStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-    gap: '30px',
-};
-
-const productCardStyle = {
-    backgroundColor: '#ffffff',
-    borderRadius: '16px',
-    overflow: 'hidden',
-    boxShadow: '0 6px 15px rgba(0,0,0,0.03)',
-    transition: 'transform 0.2s, box-shadow 0.2s',
-    '&:hover': {
-        transform: 'translateY(-5px)',
-        boxShadow: '0 12px 25px rgba(0,0,0,0.07)'
-    }
-};
-
-const imageContainerStyle = {
-    width: '100%',
-    height: '240px',
-    backgroundColor: '#eaeaea',
-    overflow: 'hidden'
-};
-
-const imageStyle = {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover' // Crucial for responsive images
-};
-
-const cardDetailsStyle = {
-    padding: '20px',
-    textAlign: 'left',
-};
-
-const productNameStyle = {
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: '8px',
-};
-
-const productPriceStyle = {
-    fontSize: '20px',
-    fontWeight: '700',
-    color: '#1a73e8', // Match primary color
-    marginBottom: '16px',
-};
-
-const viewButtonStyle = {
-    width: '100%',
-    padding: '10px',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#1a73e8',
-    backgroundColor: 'white',
-    border: '2px solid #e0e0e0',
-    borderRadius: '8px',
-    cursor: 'pointer'
-};
+// Layout Modifications and Button Styling Updates
+const headerStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 40px', backgroundColor: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' };
+const cartBtn = { backgroundColor: '#34a853', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: '500' };
+const logoutBtn = { background: 'none', border: '1px solid #d93025', color: '#d93025', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: '500' };
+const gridStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '30px' };
+const productCard = { backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' };
+const imgStyle = { width: '100%', height: '320px', objectFit: 'cover' };
+const addBtn = { width: '100%', padding: '10px', backgroundColor: '#1a73e8', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '500', transition: 'background 0.2s' };
 
 export default Products;

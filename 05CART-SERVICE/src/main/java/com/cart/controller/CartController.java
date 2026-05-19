@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cart.dto.ApiResponse;
 import com.cart.entity.CartItem;
-import com.cart.service.CartService;
+import com.cart.service.CartServiceImpl;
 
 import io.swagger.v3.oas.annotations.Operation;
 
@@ -25,7 +26,7 @@ import io.swagger.v3.oas.annotations.Operation;
 public class CartController {
 
     @Autowired
-    private CartService service;
+    private CartServiceImpl service;
 
     @Operation(summary = "Add item to cart")
     @PostMapping("/add")
@@ -33,6 +34,17 @@ public class CartController {
             @RequestBody CartItem item,
             @RequestHeader("loggedInUser") String username) {
         return ResponseEntity.ok(service.addToCart(item, username));
+    }
+    
+    @Operation(summary = "Update item quantity directly from cart layout")
+    @PutMapping("/update/{itemId}/{quantity}")
+    public ResponseEntity<ApiResponse<Void>> updateQuantity(
+            @PathVariable Long itemId,
+            @PathVariable int quantity,
+            @RequestHeader("loggedInUser") String username) {
+        
+        service.updateQuantity(itemId, quantity, username);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Quantity updated successfully", null));
     }
 
     @Operation(summary = "Get user's cart")

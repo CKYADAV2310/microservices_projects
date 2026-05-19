@@ -1,23 +1,270 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* ==========================================================================
+   1. GLOBAL RESETS & THEME VARIABLES
+   ========================================================================== */
+   :root {
+    --primary-color: #1a73e8;
+    --primary-hover: #1557b0;
+    --success-color: #34a853;
+    --success-hover: #2b8a43;
+    --danger-color: #d93025;
+    --danger-hover: #b3241c;
+    --bg-color: #f8f9fa;
+    --card-bg: #ffffff;
+    --text-main: #202124;
+    --text-muted: #5f6368;
+    --border-color: #dadce0;
+    --radius-lg: 12px;
+    --radius-md: 8px;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  /* ==========================================================================
+     2. LAYOUT CONTAINERS
+     ========================================================================== */
+  .container {
+    max-width: 450px;
+    margin: 60px auto;
+    padding: 30px;
+    background-color: var(--card-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+  }
+  
+  .container.wide-container {
+    max-width: 1100px;
+    margin: 40px auto;
+  }
+  
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+  
+  /* ==========================================================================
+     3. FORMS & INPUTS (Login, Signup, Admin Forms)
+     ========================================================================== */
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    text-align: center;
+    color: var(--text-main);
+  }
+  
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background-color: #fff;
+    color: var(--text-main);
+  }
+  
+  input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+  }
+  
+  /* Links & Redirect Texts */
+  a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  
+  a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+  }
+  
+  p#message {
+    padding: 10px;
+    border-radius: var(--radius-md);
+    background-color: rgba(26, 115, 232, 0.1);
+    color: var(--primary-color);
+    font-size: 14px;
+    text-align: center;
+  }
+  
+  /* ==========================================================================
+     4. BUTTONS
+     ========================================================================== */
+  button, .btn {
+    font-size: 15px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+  }
+  
+  button:active {
+    transform: scale(0.98);
+  }
+  
+  /* Primary Action Buttons (Submit, Login, Add to Cart) */
+  /* Clean Corrected Syntax */
+form button[type="submit"],
+.btn-primary {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+  
+  form button[type="submit"]:hover,
+  .btn-primary:hover {
+    background-color: var(--primary-hover);
+  }
+  
+  /* ==========================================================================
+     5. COMPONENT SPECIFIC STYLES
+     ========================================================================== */
+  
+  /* Cart Item Layout Rows */
+  .cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background-color: var(--card-bg);
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+  }
+  
+  /* ==========================================================================
+   5. COMPONENT SPECIFIC STYLES (CONTINUED)
+   ========================================================================== */
+
+.cart-item h4 {
+  font-size: 18px;
+  font-weight: 600;
 }
 
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  /* Global Light Grey Background */
-  background-color: #f0f2f5; 
-  color: #333;
+.cart-item button {
+  background-color: #fff;
+  border: 1px solid var(--danger-color);
+  color: var(--danger-color);
 }
 
-a {
-  text-decoration: none;
+.cart-item button:hover {
+  background-color: var(--danger-color);
+  color: #fff;
+}
+
+/* Admin Dashboard Table Structure */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--card-bg);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  margin-top: 20px;
+}
+
+th, td {
+  padding: 14px 20px;
+  text-align: left;
+}
+
+th {
+  background-color: #f1f3f4;
+  color: var(--text-main);
+  font-weight: 600;
+  border-bottom: 2px solid var(--border-color);
+}
+
+tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s;
+}
+
+tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Navigation Actions Placement Row */
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.actions button {
+  background-color: #fff;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+.actions button:hover {
+  background-color: #f1f3f4;
+  color: var(--text-main);
+}
+
+/* Specific Login/Registration Card Positioning overrides */
+.auth-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  margin: 100px auto 0 auto !important; /* Centering it horizontally and pushing down */
+  padding: 40px !important;
+}
+
+.auth-card h2 {
+  margin-bottom: 20px;
   color: #1a73e8;
+  font-size: 26px;
 }
 
-a:hover {
-  text-decoration: underline;
+.auth-card form input {
+  margin-bottom: 5px;
+}
+
+.auth-card button {
+  margin-top: 10px;
+  width: 100%;
+  padding: 12px;
+  background-color: #1a73e8;
+  color: white;
+  font-size: 16px;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+.auth-card button:hover {
+  background-color: #1557b0;
 }

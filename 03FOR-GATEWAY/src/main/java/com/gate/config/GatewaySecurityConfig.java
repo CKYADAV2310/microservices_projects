@@ -42,14 +42,15 @@ public class GatewaySecurityConfig {
             .build();
     }
  
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
+        config.setAllowedHeaders(Arrays.asList("*")); // Allows the "Content-Type" header
         config.setAllowCredentials(true);
+        // Expose Authorization so React can see the JWT token
+        config.setExposedHeaders(Arrays.asList("Authorization")); 
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
